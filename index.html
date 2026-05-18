@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz de Terror Cinematográfico</title>
+    <link href="https://fonts.googleapis.com/css2?family=Creepster&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; overflow-x: hidden; background: #000; color: #fff; }
+        
+        /* PLANO DE FUNDO INTERATIVO COM EFEITO DE RAIOS */
+        .screen { 
+            min-height: 100vh; 
+            background-image: 
+                linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(139,0,0,0.3) 50%, rgba(0,0,0,0.8) 100%),
+                url('https://images.unsplash.com/photo-1509023464722-18d996393ca8?w=1920');
+            background-size: cover; 
+            background-position: center; 
+            background-attachment: fixed;
+            position: relative; 
+            overflow-y: auto; 
+        }
+        
+        .overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(2px); }
+        .flicker { position: fixed; inset: 0; background: #000; pointer-events: none; z-index: 9999; animation: flicker 4s infinite; }
+        @keyframes flicker { 0%, 100% { opacity: 0; } 50% { opacity: 0.1; } }
+        
+        /* EFEITO DE RAIOS E TROVÕES */
+        @keyframes lightning {
+            0%, 100% { opacity: 0; }
+            45%, 55% { opacity: 0.3; }
+            50% { opacity: 0.6; }
+        }
+        .screen::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: #fff;
+            opacity: 0;
+            pointer-events: none;
+            animation: lightning 15s infinite;
+            z-index: 1;
+        }
+        
+        .container { position: relative; z-index: 10; text-align: center; max-width: 1400px; margin: 0 auto; padding: 40px 20px; }
+        
+        .skull-icon { width: 80px; height: 80px; margin: 0 auto 30px; filter: drop-shadow(0 0 20px rgba(220,38,38,0.5)); }
+        
+        .title { font-family: 'Creepster', cursive; font-size: clamp(2.5rem, 8vw, 5rem); color: #dc2626; text-shadow: 4px 4px 8px rgba(0,0,0,0.9), 0 0 20px rgba(220, 38, 38, 0.5); margin-bottom: 20px; letter-spacing: 0.2em; }
+        .subtitle { font-size: 1.2rem; color: #ccc; margin-bottom: 40px; }
+        
+        .form-box { background: rgba(39, 39, 42, 0.9); border: 2px solid #dc2626; border-radius: 15px; padding: 30px; max-width: 500px; margin: 0 auto 40px; backdrop-filter: blur(10px); }
+        .form-box h3 { font-family: 'Creepster', cursive; color: #dc2626; font-size: 1.8rem; margin-bottom: 20px; }
+        
+        .input-group { display: flex; gap: 10px; flex-wrap: wrap; }
+        .input { flex: 1; min-width: 200px; padding: 15px; background: rgba(10, 10, 10, 0.9); border: 2px solid #666; border-radius: 8px; color: #fff; font-size: 1rem; }
+        .input:focus { outline: none; border-color: #dc2626; box-shadow: 0 0 15px rgba(220, 38, 38, 0.5); }
+        
+        .btn { padding: 15px 30px; font-family: 'Creepster', cursive; font-size: 1rem; border: none; border-radius: 8px; cursor: pointer; transition: all 0.3s; }
+        .btn-primary { background: linear-gradient(135deg, #8B0000, #dc2626); color: #fff; }
+        .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(220, 38, 38, 0.8); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-secondary { background: rgba(63, 63, 70, 0.8); color: #fff; border: 1px solid #666; padding: 10px 20px; font-size: 0.9rem; }
+        .btn-secondary:hover { background: rgba(82, 82, 91, 0.9); }
+        
+        .player-info { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 30px; flex-wrap: wrap; }
+        .player-name { color: #22c55e; font-size: 1.2rem; }
+        
+        .movies-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto 40px; }
+        .movie-card { position: relative; aspect-ratio: 2/3; border: 4px solid #dc2626; border-radius: 10px; overflow: hidden; cursor: pointer; transition: all 0.3s; background-size: cover; background-position: center; }
+        .movie-card:hover { transform: scale(1.05) translateY(-5px); box-shadow: 0 0 30px rgba(220, 38, 38, 0.8); }
+        .movie-card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.9), rgba(0,0,0,0.5), transparent); }
+        .movie-title { position: absolute; top: 0; left: 0; right: 0; background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(5px); padding: 10px; text-align: center; font-family: 'Creepster', cursive; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px; }
+        
+        .ranking-box { background: rgba(39, 39, 42, 0.9); border: 2px solid #dc2626; border-radius: 15px; padding: 30px; max-width: 800px; margin: 0 auto; backdrop-filter: blur(10px); }
+        .ranking-title { font-family: 'Creepster', cursive; color: #dc2626; font-size: 2rem; margin-bottom: 30px; display: flex; align-items: center; justify-content: center; gap: 15px; }
+        .ranking-list { max-height: 400px; overflow-y: auto; }
+        .ranking-item { background: rgba(10, 10, 10, 0.8); border: 1px solid #444; border-radius: 10px; padding: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 15px; }
+        .ranking-position { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Creepster', cursive; font-size: 1.2rem; flex-shrink: 0; }
+        .gold { background: #fbbf24; color: #000; }
+        .silver { background: #d1d5db; color: #000; }
+        .bronze { background: #fb923c; color: #fff; }
+        .normal { background: #dc2626; color: #fff; }
+        .ranking-info { flex: 1; min-width: 0; }
+        .ranking-name { font-size: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .ranking-movie { font-size: 0.85rem; color: #999; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .ranking-score { font-family: 'Creepster', cursive; font-size: 1.5rem; color: #22c55e; flex-shrink: 0; }
+        
+        .quiz-screen { max-width: 1400px; margin: 0 auto; padding: 40px 20px; min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }
+        @media (max-width: 768px) { .quiz-screen { grid-template-columns: 1fr; } }
+        
+        .quiz-poster { aspect-ratio: 2/3; background-size: cover; background-position: center; border-radius: 15px; box-shadow: 0 20px 60px rgba(220, 38, 38, 0.4); }
+        .quiz-content { display: flex; flex-direction: column; gap: 20px; }
+        .quiz-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .quiz-progress { color: #dc2626; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px; }
+        .difficulty-badge { padding: 8px 16px; border-radius: 20px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; border: 1px solid; }
+        .diff-facil { background: rgba(34, 197, 94, 0.2); border-color: #22c55e; color: #86efac; }
+        .diff-medio { background: rgba(251, 191, 36, 0.2); border-color: #fbbf24; color: #fde047; }
+        .diff-dificil { background: rgba(239, 68, 68, 0.2); border-color: #ef4444; color: #fca5a5; }
+        .quiz-question { font-family: 'Creepster', cursive; font-size: clamp(1.5rem, 4vw, 2.5rem); color: #fff; line-height: 1.3; }
+        .quiz-divider { height: 3px; width: 60px; background: #dc2626; }
+        
+        .options { display: flex; flex-direction: column; gap: 15px; }
+        .option { background: rgba(39, 39, 42, 0.8); border: 2px solid #444; border-radius: 10px; padding: 20px; display: flex; align-items: center; gap: 15px; cursor: pointer; transition: all 0.3s; text-align: left; color: #fff; }
+        .option:hover:not(:disabled) { background: rgba(63, 63, 70, 0.9); border-color: #666; transform: translateX(5px); }
+        .option:disabled { cursor: not-allowed; }
+        .option.correct { background: rgba(34, 197, 94, 0.2); border-color: #22c55e; color: #86efac; }
+        .option.incorrect { background: rgba(239, 68, 68, 0.2); border-color: #ef4444; color: #fca5a5; }
+        .option-letter { width: 35px; height: 35px; background: rgba(10, 10, 10, 0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-weight: bold; }
+        .option.correct .option-letter { background: #22c55e; color: #000; }
+        .option.incorrect .option-letter { background: #ef4444; color: #fff; }
+        
+        .feedback { background: rgba(39, 39, 42, 0.9); border: 1px solid #444; border-radius: 10px; padding: 15px; font-size: 0.9rem; }
+        .feedback.correct { color: #86efac; }
+        .feedback.incorrect { color: #fca5a5; }
+        
+        .score-display { position: fixed; top: 20px; right: 20px; background: rgba(39, 39, 42, 0.9); border: 2px solid #dc2626; border-radius: 10px; padding: 20px; backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(220, 38, 38, 0.3); z-index: 100; }
+        .score-label { font-size: 0.7rem; color: #999; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+        .score-value { font-family: 'Creepster', cursive; font-size: 2rem; color: #fff; }
+        
+        .results-icon { width: 100px; height: 100px; margin: 0 auto 30px; }
+        .results-title { font-family: 'Creepster', cursive; font-size: clamp(2.5rem, 8vw, 4rem); margin-bottom: 20px; }
+        .success { color: #22c55e; text-shadow: 0 0 20px rgba(34, 197, 94, 0.5); }
+        .warning { color: #fbbf24; text-shadow: 0 0 20px rgba(251, 191, 36, 0.5); }
+        .danger { color: #ef4444; text-shadow: 0 0 20px rgba(239, 68, 68, 0.5); }
+        .results-msg { font-size: 1.2rem; color: #ccc; margin-bottom: 40px; }
+        .results-box { background: rgba(39, 39, 42, 0.8); border: 2px solid #dc2626; border-radius: 15px; padding: 40px; margin-bottom: 40px; backdrop-filter: blur(10px); }
+        .results-score { font-family: 'Creepster', cursive; font-size: 4rem; margin-bottom: 10px; }
+        .results-label { font-size: 1.2rem; color: #999; margin-bottom: 30px; }
+        .stars { display: flex; justify-content: center; gap: 8px; margin-bottom: 30px; }
+        .star { width: 30px; height: 30px; }
+        .results-percent { font-family: 'Creepster', cursive; font-size: 2.5rem; color: #999; }
+        
+        .jumpscare { position: fixed; inset: 0; background: #000; z-index: 10000; display: flex; align-items: center; justify-content: center; animation: shake 0.3s infinite; }
+        .jumpscare img { width: 100%; height: 100%; object-fit: cover; }
+        @keyframes shake { 0%, 100% { transform: translate(0, 0) rotate(0deg); } 25% { transform: translate(-10px, 10px) rotate(-5deg); } 75% { transform: translate(10px, -10px) rotate(5deg); }  }
+        
+        .hidden { display: none !important; }
+
+        /* BOTÕES DE CONTROLE */
+        .control-buttons { position: fixed; top: 20px; left: 20px; display: flex; gap: 10px; z-index: 200; }
+        .control-btn { width: 50px; height: 50px; background: rgba(39, 39, 42, 0.9); border: 2px solid #dc2626; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s; backdrop-filter: blur(10px); box-shadow: 0 5px 15px rgba(220, 38, 38, 0.3); }
+        .control-btn:hover { background: rgba(220, 38, 38, 0.3); transform: translateY(-2px); box-shadow: 0 8px 25px rgba(220, 38, 38, 0.5); }
+        .control-btn svg { width: 24px; height: 24px; stroke: #dc2626; stroke-width: 2; fill: none; }
+    </style>
+</head>
+<body>
+    <!-- BOTÕES DE CONTROLE -->
+    <div class="control-buttons">
+        <button class="control-btn" onclick="toggleFullscreen()" title="Tela Cheia">
+            <svg viewBox="0 0 24 24">
+                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+            </svg>
+        </button>
+        <button class="control-btn" onclick="resetGame()" title="Resetar Jogo">
+            <svg viewBox="0 0 24 24">
+                <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+            </svg>
+        </button>
+    </div>
+
+    <div id="app"></div>
+    <div id="jumpscare" class="jumpscare hidden">
+        <img src="https://images.unsplash.com/photo-1665028464248-f29dcbccdad5?w=1080" alt="Jumpscare">
+    </div>
+
+    <script>
+        const movieNames = {
+            nightmare: 'A Hora do Pesadelo',
+            smile: 'Sorria',
+            insidious: 'Sobrenatural',
+            conjuring: 'Invocação do Mal',
+            speak: 'Fale comigo',
+            friday13: 'Sexta-Feira 13',
+            supernatural: 'Supernatural',
+            street: 'Rua do medo',
+            panic: 'Pânico',
+            saw: 'Jogos Mortais',
+            it: 'It - A Coisa',
+            carrie: 'Carrie - A Estranha'
+        };
+
+        const questionsByMovie = {
+            nightmare: [
+                { poster: 'Freddy 1.jpg', difficulty: 'facil', question: 'Um, dois… não vou parar, Três, quatro… vou te encontrar. Canção leve, mas cheia de dor, Anuncia a chegada do terror. Quem sou eu?', options: ['Rádio quebrado', 'Canção infantil', 'Música / cantiga do Freddy', 'Sussurro da escola'], correctAnswer: 2 },
+                { poster: 'Freddy 1.jpg', difficulty: 'facil', question: 'Não estou acordado, mas também não estou morto, É nesse lugar que encontro meu confronto. Se você entrar, pode não sair, Pois é aqui que começo a agir.', options: ['Sonho', 'Labirinto', 'Escuridão', 'Memória perdida'], correctAnswer: 0 },
+                { poster: 'Freddy 1.jpg', difficulty: 'facil', question: 'Não sou lâmina comum, mas posso cortar. Em dedos afiados começo a atuar. Sou extensão de quem quer te ferir, E não há como de mim fugir.', options: ['Machado enferrujado', 'Garras demoníacas', 'Luva com lâminas', 'Foice de aço'], correctAnswer: 1 },
+                { poster: 'Freddy 1.jpg', difficulty: 'medio', question: 'Sou o medo que cresce ao descansar. Quanto mais você tenta evitar, mais vou te alcançar. Sem precisar de porta pra entrar, Eu apareço quando você vai deitar.', options: ['Ilusão', 'Alucinação', 'Paralisia do sono', 'Pesadelo'], correctAnswer: 3 },
+                { poster: 'Freddy 1.jpg', difficulty: 'medio', question: 'Sou o passado que voltou pra cobrar, Mesmo destruído, continuo a caçar. Não pertenço mais ao mundo real, Mas faço dele algo fatal.', options: ['Afogado', 'Queimado vivo', 'Enforcado', 'Baleado'], correctAnswer: 1 },
+                { poster: 'Freddy 1.jpg', difficulty: 'medio', question: 'Sou o limite entre viver e morrer, Se ultrapassar, você pode desaparecer. Não sou porta, mas sou passagem, E nela acontece a pior viagem.', options: ['Inferno sombrio', 'Labirinto mental', 'Mundo dos sonhos', 'Reino oculto'], correctAnswer: 2 },
+                { poster: 'Freddy 1.jpg', difficulty: 'dificil', question: 'Sou o que te salva por um tempo, Mas cobra caro pelo sofrimento. Você me busca pra não dormir, Mas no final vai cair.', options: ['Cafeína', 'Desespero', 'Energia artificial', 'Insônia'], correctAnswer: 3 },
+                { poster: 'Freddy 1.jpg', difficulty: 'dificil', question: 'Sou o lugar comum que virou maldição, Onde começou toda a destruição. Não pareço perigoso ao olhar, Mas carrego um terror sem igual.', options: ['Rua Elm', 'Crystal Lake', 'Silent Hill', 'Haddonfield'], correctAnswer: 0 },
+                { poster: 'Freddy 1.jpg', difficulty: 'dificil', question: 'Sou o momento em que você acha que acordou, Mas ainda está preso onde tudo começou. Engano sua mente com perfeição, E te prendo mais fundo na ilusão.', options: ['Alucinação coletiva', 'Pesadelo repetido', 'Viagem astral', 'Falso despertar'], correctAnswer: 3 }
+            ],
+            smile: [
+                    { poster: 'Sorria 2.jpg', difficulty: 'facil', question: 'Meu rosto parece feliz e normal, Mas escondo algo sobrenatural. O que anuncia minha presença?', options: ['Olhos negros', 'Sorriso perturbador', 'Voz estranha', 'Sombras'], correctAnswer: 1 },
+                    { poster: 'Sorria 2.jpg', difficulty: 'facil', question: 'Para continuar existindo preciso passar, De vítima em vítima sem parar. Como a entidade se espalha?', options: ['Toque', 'Testemunhar uma morte', 'Objetos amaldiçoados', 'Espelhos'], correctAnswer: 1 },
+                    { poster: 'Sorria 2.jpg', difficulty: 'facil', question: 'Tento ajudar pessoas mentalmente abaladas, Antes de viver cenas assustadas. Qual profissão de Rose?', options: ['Médica', 'Psiquiatra', 'Policial', 'Advogada'], correctAnswer: 1 },
+                    { poster: 'Sorria 2.jpg', difficulty: 'medio', question: 'Quanto mais dor emocional existir, Mais forte consigo agir. O que alimenta a entidade?', options: ['Raiva', 'Trauma e medo', 'Escuridão', 'Silêncio'], correctAnswer: 1 },
+                    { poster: 'Sorria 2.jpg', difficulty: 'medio', question: 'Mesmo vendo o terror acontecer, Ninguém consegue acreditar em você. O que isso causa?', options: ['Isolamento', 'Coragem', 'Confiança', 'Memórias felizes'], correctAnswer: 0 },
+                    { poster: 'Sorria 2.jpg', difficulty: 'medio', question: 'Existe um jeito cruel de sobreviver, Mas outro alguém precisa sofrer. Como escapar da entidade?', options: ['Rezando', 'Passando a maldição', 'Dormindo', 'Fugindo da cidade'], correctAnswer: 1 },
+                    { poster: 'Sorria 2.jpg', difficulty: 'dificil', question: 'O terror parece acabar no final, Mas tudo retorna de forma brutal. O que isso representa?', options: ['Fim definitivo', 'Ciclo da entidade', 'Nova vítima aleatória', 'Ritual incompleto'], correctAnswer: 1 },
+                    { poster: 'Sorria 2.jpg', difficulty: 'dificil', question: 'Quanto mais duvidam da sua visão, Mais você perde a noção. O que a protagonista enfrenta?', options: ['Possessão física', 'Colapso mental', 'Viagem astral', 'Hipnose'], correctAnswer: 1 },
+                    { poster: 'Sorria 2.jpg', difficulty: 'dificil', question: 'Não tenho forma fixa pra existir, Mas sempre preciso de alguém pra seguir. Quem sou eu?', options: ['Fantasma', 'Entidade amaldiçoada', 'Demônio vermelho', 'Alucinação'], correctAnswer: 1 }
+                ],
+            insidious: [
+                { poster: 'Sobrenatural 1.jpg', difficulty: 'facil', question: 'Sou um lugar além da mente e da razão, Onde espíritos vagam na escuridão. Quem entra pode não voltar jamais, Pois o medo aqui nunca fica pra trás.', options: ['O Limbo', 'O Além', 'O Inferno', 'A Escuridão'], correctAnswer: 1 },
+                { poster: 'Sobrenatural 1.jpg', difficulty: 'facil', question: 'Meu corpo dorme, mas minha mente se perdeu, Preso entre espíritos, desapareceu. Quem sou eu?', options: ['Josh', 'Dalton', 'Renai', 'Elise'], correctAnswer: 1 },
+                { poster: 'Sobrenatural 1.jpg', difficulty: 'facil', question: 'Tenho rosto vermelho e sorriso cruel, Espero no escuro pelo momento fiel. Qual criatura sou eu?', options: ['Homem da sombra', 'Demônio vermelho', 'Fantasma negro', 'Espírito perdido'], correctAnswer: 1 },
+                { poster: 'Sobrenatural 1.jpg', difficulty: 'medio', question: 'Sou capaz de enxergar além do normal, Guiando outros pelo sobrenatural. Mesmo com medo continuo a ajudar. Quem sou eu?', options: ['Lorraine', 'Elise', 'Regan', 'Mia'], correctAnswer: 1 },
+                { poster: 'Sobrenatural 1.jpg', difficulty: 'medio', question: 'Não é sonho, mas parece ser, Pois a alma consegue do corpo correr. Como isso é chamado?', options: ['Premonição', 'Viagem astral', 'Possessão', 'Hipnose'], correctAnswer: 1 },
+                { poster: 'Sobrenatural 1.jpg', difficulty: 'medio', question: 'Quando um corpo vazio aparece sem proteção, Algo maligno tenta ocupação. O que acontece?', options: ['Maldição eterna', 'Possessão espiritual', 'Ressurreição', 'Maldição mental'], correctAnswer: 1 },
+                { poster: 'Sobrenatural 1.jpg', difficulty: 'dificil', question: 'Quanto mais assustado alguém ficar, Mais fácil as entidades podem atacar. O que fortalece os espíritos?', options: ['Ódio', 'Escuridão', 'Medo', 'Silêncio'], correctAnswer: 2 },
+                { poster: 'Sobrenatural 1.jpg', difficulty: 'dificil', question: 'Sou uma abertura invisível e perigosa, Permitindo passagem monstruosa. Quanto mais aberta eu ficar, Mais difícil será escapar.', options: ['Portal espiritual', 'Maldição', 'Profecia', 'Ilusão'], correctAnswer: 0 },
+                { poster: 'Sobrenatural 1.jpg', difficulty: 'dificil', question: 'Não quero matar logo de início, Prefiro esperar o momento propício. Meu objetivo é tomar o seu lugar. Quem sou eu?', options: ['Fantasma', 'Demônio possessor', 'Médium sombrio', 'Espírito perdido'], correctAnswer: 1 }
+            ],
+            conjuring: [
+                { poster: 'Invocação 1.webp', difficulty: 'facil', question: 'Quem são os investigadores?', options: ['Ed e Lorraine Warren', 'Sam e Dean', 'Mulder e Scully', 'Peter e Diane'], correctAnswer: 0 },
+                { poster: 'Invocação 1.webp', difficulty: 'facil', question: 'Nome da boneca assustadora?', options: ['Chucky', 'Annabelle', 'Billy', 'Brahms'], correctAnswer: 1 },
+                { poster: 'Invocação 1.webp', difficulty: 'facil', question: 'Qual família é assombrada?', options: ['Família Lutz', 'Família Perron', 'Família Hodgson', 'Família Lambert'], correctAnswer: 1 },
+                { poster: 'Invocação 1.webp', difficulty: 'medio', question: 'O que Lorraine consegue fazer?', options: ['Ler mentes', 'Ver entidades', 'Mover objetos', 'Controlar tempo'], correctAnswer: 1 },
+                { poster: 'Invocação 1.webp', difficulty: 'medio', question: 'Ritual para expulsar demônios?', options: ['Purificação', 'Exorcismo', 'Benção', 'Invocação'], correctAnswer: 1 },
+                { poster: 'Invocação 1.webp', difficulty: 'medio', question: 'Ed é especialista em quê?', options: ['Psicologia', 'Demonologia', 'Teologia', 'Física'], correctAnswer: 1 },
+                { poster: 'Invocação 1.webp', difficulty: 'dificil', question: 'Annabelle possui uma boneca?', options: ['Sim', 'Não', 'Às vezes', 'Nunca'], correctAnswer: 0 },
+                { poster: 'Invocação 1.webp', difficulty: 'dificil', question: 'Warren têm museu de artefatos?', options: ['Sim', 'Não', 'Tinham', 'Nunca tiveram'], correctAnswer: 0 },
+                { poster: 'Invocação 1.webp', difficulty: 'dificil', question: 'Casos dos Warren são reais?', options: ['Sim', 'Não', 'Baseados em fatos', 'Ficção'], correctAnswer: 2 }
+            ],
+            speak: [
+                { poster: 'Fale 2.jpg', difficulty: 'facil', question: 'Não sou brinquedo nem chave comum, Mas abro portas para algo incomum. O que inicia tudo?', options: ['Livro antigo', 'Mão embalsamada', 'Espelho ritual', 'Símbolo demoníaco'], correctAnswer: 1 },
+                { poster: 'Fale 2.jpg', difficulty: 'facil', question: 'Quando digo “eu deixo você entrar”, Algo sobrenatural começa a chegar. O que estou fazendo?', options: ['Reza', 'Consentimento espiritual', 'Exorcismo', 'Ritual de proteção'], correctAnswer: 1 },
+                { poster: 'Fale 2.jpg', difficulty: 'facil', question: 'Os espíritos assumem rostos conhecidos, Tornando os encontros ainda mais perigosos. O que eles usam?', options: ['Máscaras', 'Ilusões familiares', 'Sombras', 'Objetos'], correctAnswer: 1 },
+                { poster: 'Fale 2.jpg', difficulty: 'medio', question: 'Existe um limite perigoso pra continuar, E ultrapassá-lo pode te condenar. Qual é a regra principal?', options: ['Nunca tocar sozinho', 'Não passar dos 90 segundos', 'Ficar em silêncio', 'Nunca apagar as luzes'], correctAnswer: 1 },
+                { poster: 'Fale 2.jpg', difficulty: 'medio', question: 'Ela parece alguém querido e familiar, Mas só quer manipular. Quem engana Mia?', options: ['Entidade sombria', 'Espírito fingindo ser sua mãe', 'Demônio vermelho', 'Amigo possuído'], correctAnswer: 1 },
+                { poster: 'Fale 2.jpg', difficulty: 'medio', question: 'Quanto mais os espíritos entram em contato, Mais difícil distinguir verdade do falso. O que isso gera?', options: ['Viagem astral', 'Alucinações', 'Premonições', 'Hipnose'], correctAnswer: 1 },
+                { poster: 'Fale 2.jpg', difficulty: 'dificil', question: 'O erro parecia pequeno no começo, Mas abriu caminho para o sofrimento imenso. O que causou o caos?', options: ['Quebrar a mão', 'Ultrapassar o tempo limite', 'Acender velas', 'Fazer silêncio'], correctAnswer: 1 },
+                { poster: 'Fale 2.jpg', difficulty: 'dificil', question: 'Sou a passagem invisível entre dois mundos, E posso aprisionar alguém por segundos… ou eternamente. Quem sou eu?', options: ['Poço amaldiçoado', 'Portal espiritual', 'Dimensão perdida', 'Círculo sombrio'], correctAnswer: 1 },
+                { poster: 'Fale 2.jpg', difficulty: 'dificil', question: 'Mesmo sem corpo consigo chamar, E quanto mais me escutam, mais volto a atacar. O que sou?', options: ['Sombra viva', 'Voz dos espíritos', 'Maldição eterna', 'Demônio oculto'], correctAnswer: 1 }
+            ],
+            friday13: [
+                { poster: 'Jason 1.webp', difficulty: 'facil', question: '“Eu nasci em um lago e uso máscara para esconder meu rosto.” Quem sou eu?', options: ['Freddy Krueger', 'Ghostface', 'Jason Voorhees', 'Michael Myers'], correctAnswer: 2 },
+                { poster: 'Jason 1.webp', difficulty: 'facil', question: 'Qual data é associada ao azar e ao terror da franquia?', options: ['Halloween', 'Sexta-feira 13', 'Natal Sangrento', 'Dia dos Mortos'], correctAnswer: 1 },
+                { poster: 'Jason 1.webp', difficulty: 'facil', question: 'Quem matou por vingança no primeiro Sexta-Feira 13?', options: ['Jason Voorhees', 'Freddy Krueger', 'Pamela Voorhees', 'Leatherface'], correctAnswer: 2 },
+                { poster: 'Jason 1.webp', difficulty: 'medio', question: 'Com máscara de hóquei e aparência assustadora, Jason é conhecido como o quê?', options: ['Detetive', 'Sobrevivente', 'Serial killer', 'Fantasma'], correctAnswer: 2 },
+                { poster: 'Jason 1.webp', difficulty: 'medio', question: 'O que domina Crystal Lake durante os ataques?', options: ['A neblina', 'A escuridão', 'O silêncio', 'A chuva'], correctAnswer: 1 },
+                { poster: 'Jason 1.webp', difficulty: 'medio', question: 'Qual objeto branco e sem expressão virou símbolo de Jason?', options: ['Capacete', 'Máscara de hóquei', 'Chapéu', 'Óculos'], correctAnswer: 1 },
+                { poster: 'Jason 1.webp', difficulty: 'dificil', question: 'Qual elemento do acampamento deveria trazer calma, mas causa medo?', options: ['Floresta', 'Cabana', 'Lago', 'Fogueira'], correctAnswer: 2 },
+                { poster: 'Jason 1.webp', difficulty: 'dificil', question: 'Qual lugar de férias virou cenário de pesadelos?', options: ['Hotel Overlook', 'Acampamento Crystal Lake', 'Casa Winchester', 'Hospital Silent Hill'], correctAnswer: 1 },
+                { poster: 'Jason 1.webp', difficulty: 'dificil', question: 'Qual tragédia iniciou toda a fúria da franquia?', options: ['O incêndio do acampamento', 'A morte de Pamela', 'A morte de Jason quando criança', 'O desaparecimento dos monitores'], correctAnswer: 2 }
+                ],
+            supernatural: [
+                { poster: 'Supernatural 1.jpg', difficulty: 'facil', question: 'Desenhado no chão para impedir a escuridão, Sou barreira contra qualquer possessão. Enquanto estou inteiro, ninguém consegue passar, Mas basta quebrar pra tudo começar.', options: ['Pentagrama demoníaco', 'Círculo de sal', 'Runa angelical', 'Selo profano'], correctAnswer: 1 },
+                { poster: 'Supernatural 1.jpg', difficulty: 'facil', question: 'Carrego palavras que ninguém queria ler, Destinos marcados difíceis de esquecer. Quem tenta fugir do que escrevi, Descobre que já estava preso ali.', options: ['Livro dos Profetas', 'Diário Winchester', 'Livro das Sombras', 'Evangelho sombrio'], correctAnswer: 0 },
+                { poster: 'Supernatural 1.jpg', difficulty: 'facil', question: 'Já fui servo do céu, mas escolhi mudar. Entre humanos aprendi a lutar. Mesmo sem entender totalmente emoção, Entreguei minha vida por proteção.', options: ['Crowley', 'Lucifer', 'Castiel', 'Gabriel'], correctAnswer: 2 },
+                { poster: 'Supernatural 1.jpg', difficulty: 'medio', question: 'Prometo soluções rápidas sem hesitar, Mas sempre volto para cobrar. O que parece ajuda no começo, No fim vira desespero e preço.', options: ['Maldição eterna', 'Pacto demoníaco', 'Feitiço celestial', 'Ritual proibido'], correctAnswer: 1 },
+                { poster: 'Supernatural 1.jpg', difficulty: 'medio', question: 'Crio histórias, regras e caminhos, Como se todos fossem meus vizinhos. Mas quando alguém desafia meu controle, Descubro que nem tudo cabe no meu molde.', options: ['Metatron', 'Miguel', 'Chuck / Deus', 'Azazel'], correctAnswer: 2 },
+                { poster: 'Supernatural 1.jpg', difficulty: 'medio', question: 'Sou metal, estrada e lembrança. Sempre presente em cada mudança. Mesmo sem falar, acompanho cada irmão, Guardando segredos em minha direção.', options: ['Moto de Dean', 'Impala', 'Caminhonete preta', 'Carro celestial'], correctAnswer: 1 },
+                { poster: 'Supernatural 1.jpg', difficulty: 'dificil', question: 'Não preciso de lâmina pra machucar. Uso palavras antigas para controlar. Até criaturas celestiais podem cair, Quando começo a agir.', options: ['Exorcismo / encantamento', 'Símbolo angelical', 'Feitiço de sangue', 'Maldição eterna'], correctAnswer: 0 },
+                { poster: 'Supernatural 1.jpg', difficulty: 'dificil', question: 'Mesmo depois do fim, continuo presente. Sempre encontro um retorno diferente. A morte aqui nunca parece durar, Porque alguém sempre consegue voltar.', options: ['Vida eterna', 'Ressurreição', 'Reencarnação', 'Imortalidade'], correctAnswer: 1 },
+                { poster: 'Supernatural 1.jpg', difficulty: 'dificil', question: 'Posso proteger ou destruir, Dependendo de quem tenta me usar. Em mãos erradas viro condenação, Mesmo parecendo salvação.', options: ['Relíquias antigas', 'Símbolos / magia', 'Armas celestiais', 'Runas demoníacas'], correctAnswer: 1 }
+            ],
+            Street: [
+                { poster: 'Rua 1.webp', difficulty: 'facil', question: 'Sou uma cidade onde o azar virou rotina, Aqui o terror não termina.', options: ['Sunnyvale', 'Dark Hills', 'Raven Creek', 'Shadyside'], correctAnswer: 3 },
+                { poster: 'Rua 1.webp', difficulty: 'facil', question: 'Minha vizinha parece perfeita, sem dor nem sofrimento, Mas esconde um passado diferente do momento.', options: ['Sunnyvale', 'Hollow Creek', 'Fear Town', 'Blackwood'], correctAnswer: 0 },
+                { poster: 'Rua 1.webp', difficulty: 'facil', question: 'Não importa o tempo, sempre volto a caçar,Chamado por sangue, pronto pra matar.', options: ['Espíritos vingativos', 'Assassinos possuídos', 'Sobreviventes amaldiçoados', 'Caçadores da floresta'], correctAnswer: 1 },
+                { poster: 'Rua 1.webp', difficulty: 'medio', question: 'Não sou pessoa, mas marco o fim da paz,Quando começo, ninguém escapa jamais.', options: ['Ritual', 'Vingança', 'Maldição', 'Profecia'], correctAnswer: 2 },
+                { poster: 'Rua 1.webp', difficulty: 'medio', question: 'Fui apontada como origem de todo mal,Mas minha verdade foi enterrada como algo banal.Carrego culpa que não é minha,E mesmo inocente, sou vista como rainha da ruína.', options: ['Ziggy Berman', 'Sarah Fier', 'Cindy Berman', 'Kate Schmidt'], correctAnswer: 1 },
+                { poster: 'Rua 1.webp', difficulty: 'medio', question: 'Sou escolhido sem saber, marcado sem ver,Minha vida vira alvo antes mesmo de entender.Não escolhi esse destino cruel,Mas agora corro contra algo além do papel.', options: ['Escolhido da bruxa', 'Sobrevivente final', 'Pessoa marcada pelo sangue', 'Portador da maldição'], correctAnswer: 2 },
+                { poster: 'Rua 1.webp', difficulty: 'dificil', question: 'Sou prova escondida sob terra e dor,Quando encontro meu lugar, revelo o verdadeiro autor.Não falo, mas conto toda a história,E posso mudar completamente a memória.', options: ['Diário perdido', 'Marca demoníaca', 'Ossos de Sarah Fier', 'Medalhão amaldiçoado'], correctAnswer: 2 },
+                { poster: 'Rua 1.webp', difficulty: 'dificil', question: 'Não sou objeto qualquer, mas guardo nomes e dor,Cada marca em mim fortalece o terror.Sou prova do acordo que ninguém quer enxergar,E quando revelado, faço toda a verdade mudar.', options: ['Livro dos mortos', 'Registro demoníaco', 'Livro / registro dos nomes', 'Diário da maldição'], correctAnswer: 2 },
+                { poster: 'Rua 1.webp', difficulty: 'dificil', question: 'Sou visto como herói por quem vive na luz,Mas minha escolha condena quem a escuridão conduz.Carrego poder herdado e aparência de salvação,Mas por trás disso, alimento uma antiga corrupção.', options: ['Família Goode', 'Família Fier', 'Família Berman', 'Família Hawthorne'], correctAnswer: 0 }
+            ],
+            panic: [
+                { poster: 'Panico 1.webp', difficulty: 'facil', question: 'Quantos dias após ver a fita você morre?', options: ['3 dias', '5 dias', '7 dias', '10 dias'], correctAnswer: 2 },
+                { poster: 'Panico 1.webp', difficulty: 'facil', question: 'Antes da faca aparecer, eu começo a brincar. Faço perguntas inocentes só pra te assustar. Minha voz invade a noite sem pedir permissão, E transformo curiosidade em tensão.', options: ['Carta anônima', 'Ligação do Ghostface', 'Mensagem de rádio', 'Entrevista policial'],correctAnswer: 1},
+                { poster: 'Panico 1.webp', difficulty: 'facil', question: 'Sou tratado como regra de sobrevivência, Mas confiar demais em mim vira imprudência. Nos filmes pareço solução perfeita, Mesmo sem garantir saída estreita.',options: ['Plano de fuga', 'Manual policial', 'Regras dos filmes de terror', 'Código secreto'],correctAnswer: 2},
+                { poster: 'Panico 1.webp', difficulty: 'medio', question: 'Posso rir ao seu lado sem levantar suspeita, Mas escondo intenções nada perfeitas. Meu rosto verdadeiro demora a surgir, E quando aparece, alguém vai cair.',options: ['Vizinho misterioso', 'Sobrevivente final', 'Assassino escondido entre os personagens', 'Detetive infiltrado'],correctAnswer: 2},
+                { poster: 'Panico 1.webp', difficulty: 'medio',question: 'Não quero apenas respostas decoradas. Quero sentir suas reações assustadas. Cada palavra sua pode decidir, Se você continua… ou vai sumir.',options: ['Jogo psicológico', 'Interrogatório do Ghostface', 'Ligação silenciosa', 'Desafio mortal'],correctAnswer: 1},
+                { poster: 'Panico 1.webp', difficulty: 'medio',question: 'Escondo rostos e revelo intenções. Quando apareço, começam perseguições. Não tenho vida nem vontade própria, Mas acompanho toda história caótica.',options: ['Capuz sombrio', 'Fantasia preta', 'Máscara do Ghostface', 'Máscara ritual'],correctAnswer: 2},
+                { poster: 'Panico 1.webp',difficulty: 'dificil',question: 'Com voz calma e rosto assustador, Transformo chamadas em puro terror. Não importa quem esteja por trás da máscara, Meu nome sempre volta à caça.',options: ['Michael Myers', 'Leatherface', 'Ghostface', 'Jason Voorhees'],correctAnswer: 2},
+                { poster: 'Panico 1.webp',difficulty: 'dificil',question: 'Sozinho já sou perigoso, Mas em dupla fico ainda mais misterioso. Confundo pistas e crio distração, Enquanto espalho medo e manipulação.',options: ['Culto mascarado', 'Mais de um assassino', 'Espírito vingativo', 'Família amaldiçoada'],correctAnswer: 1},
+                { poster: 'Panico 1.webp',difficulty: 'dificil',question: '“Qual seu filme favorito?” costumo dizer, Mas por trás da pergunta existe algo a temer. Não é conversa, nem diversão qualquer, Pois errar pode custar o que você quer.',options: ['Entrevista de cinema', 'Teste de coragem', 'Um jogo de morte', 'Brincadeira escolar'],correctAnswer: 2}
+            ],
+            saw: [
+                { poster: 'Jogos 1.jpg', difficulty: 'facil', question: 'Dou escolhas cruéis sem hesitar, E obrigo vítimas a se sacrificar. Quem sou eu?', options: ['Freddy', 'Jigsaw', 'Jason', 'Ghostface'], correctAnswer: 1 },
+                { poster: 'Jogos 1.jpg', difficulty: 'facil', question: 'Não sou cela nem prisão comum, Mas transformo dor em teste incomum. O que sou?', options: ['Labirinto', 'Armadilha mortal', 'Tortura', 'Cela escura'], correctAnswer: 1 },
+                { poster: 'Jogos 1.jpg', difficulty: 'facil', question: 'Antes de tudo começar, Minha voz aparece pra avisar. O que é usado para transmitir as regras?', options: ['Rádio', 'Fita gravada', 'Telefone', 'Televisão'], correctAnswer: 1 },
+                { poster: 'Jogos 1.jpg', difficulty: 'medio', question: 'Não escolho vítimas por acaso, Todas carregam erros do passado. O que Jigsaw acredita?', options: ['Que todos merecem morrer', 'Que precisam valorizar a vida', 'Que são inocentes', 'Que não têm escolha'], correctAnswer: 1 },
+                { poster: 'Jogos 1.jpg', difficulty: 'medio', question: 'Sou pequeno, tenho rosto branco e andar estranho, Represento os jogos e o medo tamanho. Quem sou?', options: ['Chucky', 'Billy', 'Brahms', 'Annabelle'], correctAnswer: 1 },
+                { poster: 'Jogos 1.jpg', difficulty: 'medio', question: 'O tempo passa sem esperar, E quando acaba não há como voltar. O que aumenta a tensão dos jogos?', options: ['Silêncio', 'Cronômetro', 'Escuridão', 'Labirinto'], correctAnswer: 1 },
+                { poster: 'Jogos 1.jpg', difficulty: 'dificil', question: 'Mesmo doente continuo manipulando, Cada teste cruel planejando. Qual doença Jigsaw possui?', options: ['Leucemia', 'Câncer', 'Amnésia', 'Insônia'], correctAnswer: 1 },
+                { poster: 'Jogos 1.jpg', difficulty: 'dificil', question: 'Sobreviver não significa vencer, Pois o trauma continua a crescer. O que as vítimas carregam depois?', options: ['Maldição', 'Consequências psicológicas', 'Poderes', 'Esquecimento'], correctAnswer: 1 },
+                { poster: 'Jogos 1.jpg', difficulty: 'dificil', question: 'Alguns conseguem escapar da dor, Desde que enfrentem o horror. Como sobreviver aos jogos?', options: ['Ignorando regras', 'Seguindo as instruções', 'Destruindo tudo', 'Fugindo rápido'], correctAnswer: 1 }
+            ],
+            it: [
+                { poster: 'Coisa 1.jpg', difficulty: 'facil', question: 'Assumo a forma do seu maior temor, E fico mais forte através do horror. Quem sou eu?', options: ['Fantasma', 'Pennywise', 'Vampiro', 'Monstro da sombra'], correctAnswer: 1 },
+                { poster: 'Coisa 1.jpg', difficulty: 'facil', question: 'Pequeno, simples e levado pela chuva, Acabo guiando alguém para a desventura. O que sou?', options: ['Balão vermelho', 'Barquinho de papel', 'Lanterna', 'Bola vermelha'], correctAnswer: 1 },
+                { poster: 'Coisa 1.jpg', difficulty: 'facil', question: 'Somos crianças unidas pelo medo, Enfrentando juntos um segredo. Qual o nome do grupo?', options: ['Clube dos Corajosos', 'Clube dos Perdedores', 'Os Escolhidos', 'Caçadores de Derry'], correctAnswer: 1 },
+                { poster: 'Coisa 1.jpg', difficulty: 'medio', question: 'Depois de muitos anos volto a despertar, Sempre pronto para caçar. O que acontece com Pennywise?', options: ['Desaparece pra sempre', 'Retorna em ciclos', 'Troca de cidade', 'Perde poderes'], correctAnswer: 1 },
+                { poster: 'Coisa 1.jpg', difficulty: 'medio', question: 'Vivo escondido embaixo da cidade, Cercado de escuridão e insanidade. Onde Pennywise costuma ficar?', options: ['Cemitério', 'Esgoto', 'Escola', 'Floresta'], correctAnswer: 1 },
+                { poster: 'Coisa 1.jpg', difficulty: 'medio', question: 'Flutuo no ar parecendo diversão, Mas escondo terror e manipulação. O que simboliza a presença do mal?', options: ['Pipa vermelha', 'Balão vermelho', 'Máscara rachada', 'Luz piscando'], correctAnswer: 1 },
+                { poster: 'Coisa 1.jpg', difficulty: 'dificil', question: 'Enquanto existir dentro de você, Continuarei tendo poder. O que precisa ser vencido?', options: ['Escuridão', 'Medo', 'Raiva', 'Solidão'], correctAnswer: 1 },
+                { poster: 'Coisa 1.jpg', difficulty: 'dificil', question: 'Nem sempre o que é visto é real, Mas ainda causa um efeito fatal. O que Pennywise cria?', options: ['Alucinações', 'Sonhos felizes', 'Hipnose', 'Ilusões mágicas'], correctAnswer: 0 },
+                { poster: 'Coisa 1.jpg', difficulty: 'dificil', question: 'Não sou um lugar físico apenas, Mas também guardo traumas e problemas. Quem sou eu?', options: ['A mente', 'A cidade', 'O poço', 'O esgoto'], correctAnswer: 0 }
+            ],
+            carrie: [
+                { poster: 'Carrie 1.jpg', difficulty: 'facil', question: 'Com a mente consigo mover, E através da dor fazer tudo acontecer. Qual poder Carrie possui?', options: ['Hipnose', 'Telecinese', 'Invisibilidade', 'Levitação'], correctAnswer: 1 },
+                { poster: 'Carrie 1.jpg', difficulty: 'facil', question: 'Foi aqui que o medo começou, E onde sua vergonha aumentou. Qual lugar marcou o início do caos?', options: ['Biblioteca', 'Banheiro', 'Ginásio', 'Sala de aula'], correctAnswer: 1 },
+                { poster: 'Carrie 1.jpg', difficulty: 'facil', question: 'No baile tudo parecia normal, Até virar um pesadelo brutal. O que caiu sobre Carrie?', options: ['Água', 'Sangue de porco', 'Tinta preta', 'Fogo'], correctAnswer: 1 },
+                { poster: 'Carrie 1.jpg', difficulty: 'medio', question: 'Dizia proteger através da fé, Mas causava medo até. Quem controlava Carrie em casa?', options: ['Seu pai', 'Sua mãe fanática religiosa', 'A diretora', 'Uma irmã'], correctAnswer: 1 },
+                { poster: 'Carrie 1.jpg', difficulty: 'medio', question: 'Parecia um gesto gentil e sincero, Mas escondia um plano traiçoeiro. O que Carrie recebe?', options: ['Carta anônima', 'Convite para o baile', 'Presente misterioso', 'Pedido de desculpas'], correctAnswer: 1 },
+                { poster: 'Carrie 1.jpg', difficulty: 'medio', question: 'Anos de dor e humilhação explodem de repente, Transformando tudo em tragédia crescente. O que acontece no final?', options: ['Carrie foge', 'Surto no baile', 'Carrie desaparece', 'Um incêndio começa sozinho'], correctAnswer: 1 },
+                { poster: 'Carrie 1.jpg', difficulty: 'dificil', question: 'Algo comum virou instrumento cruel, Marcando para sempre aquele papel. O que foi usado na humilhação?', options: ['Corda', 'Balde de sangue', 'Espelho', 'Corrente'], correctAnswer: 1 },
+                { poster: 'Carrie 1.jpg', difficulty: 'dificil', question: 'Não machuca fisicamente no começo, Mas destrói alguém por dentro aos poucos. O que Carrie sofre constantemente?', options: ['Possessão', 'Bullying', 'Maldição', 'Perseguição policial'], correctAnswer: 1 },
+                { poster: 'Carrie 1.jpg', difficulty: 'dificil', question: 'Tudo que aconteceu nasceu de anos de sofrimento acumulado. O que representa o final de Carrie?', options: ['Perdão', 'Vingança', 'Sacrifício', 'Desaparecimento'], correctAnswer: 1 }
+            ]
+        };
+
+        let state = {
+            screen: 'welcome',
+            playerName: localStorage.getItem('horrorQuizPlayerName') || '',
+            tempName: '',
+            currentMovie: '',
+            currentQuestionIndex: 0,
+            score: 0,
+            selectedAnswer: null,
+            showFeedback: false,
+            rankings: JSON.parse(localStorage.getItem('horrorQuizRankings') || '[]')
+        };
+
+        let audioContext = null;
+        let oscillators = [];
+
+        // FUNÇÃO DE TELA CHEIA
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log('Erro ao entrar em tela cheia:', err);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // FUNÇÃO DE RESETAR JOGO COM SENHA
+        function resetGame() {
+            const password = prompt('Digite a senha para resetar o jogo:');
+            if (password === 'teste123') {
+                localStorage.removeItem('horrorQuizPlayerName');
+                localStorage.removeItem('horrorQuizRankings');
+                state = {
+                    screen: 'welcome',
+                    playerName: '',
+                    tempName: '',
+                    currentMovie: '',
+                    currentQuestionIndex: 0,
+                    score: 0,
+                    selectedAnswer: null,
+                    showFeedback: false,
+                    rankings: []
+                };
+                alert('Jogo resetado com sucesso!');
+                render();
+            } else if (password !== null) {
+                alert('Senha incorreta!');
+            }
+        }
+
+        // SOM DE FUNDO ATMOSFÉRICO COM TROVÕES E BATIDAS CARDÍACAS
+        function startBackgroundMusic() {
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+                // Tom grave contínuo (drone de fundo)
+                const osc1 = audioContext.createOscillator();
+                const gain1 = audioContext.createGain();
+                osc1.connect(gain1);
+                gain1.connect(audioContext.destination);
+                osc1.type = 'sine';
+                osc1.frequency.value = 55;
+                gain1.gain.value = 0.08;
+                osc1.start();
+                oscillators.push(osc1);
+
+                // Batidas cardíacas
+                const osc2 = audioContext.createOscillator();
+                const gain2 = audioContext.createGain();
+                osc2.connect(gain2);
+                gain2.connect(audioContext.destination);
+                osc2.type = 'triangle';
+                osc2.frequency.value = 110;
+                gain2.gain.value = 0;
+                osc2.start();
+                oscillators.push(osc2);
+
+                setInterval(() => {
+                    if (gain2 && audioContext) {
+                        const now = audioContext.currentTime;
+                        gain2.gain.cancelScheduledValues(now);
+                        gain2.gain.setValueAtTime(0, now);
+                        gain2.gain.linearRampToValueAtTime(0.05, now + 0.1);
+                        gain2.gain.linearRampToValueAtTime(0, now + 0.3);
+                    }
+                }, 1500);
+
+                // Suspense agudo ocasional
+                const osc3 = audioContext.createOscillator();
+                const gain3 = audioContext.createGain();
+                osc3.connect(gain3);
+                gain3.connect(audioContext.destination);
+                osc3.type = 'sawtooth';
+                osc3.frequency.value = 880;
+                gain3.gain.value = 0;
+                osc3.start();
+                oscillators.push(osc3);
+
+                setInterval(() => {
+                    if (gain3 && osc3 && audioContext) {
+                        const now = audioContext.currentTime;
+                        gain3.gain.cancelScheduledValues(now);
+                        osc3.frequency.cancelScheduledValues(now);
+                        gain3.gain.setValueAtTime(0, now);
+                        osc3.frequency.setValueAtTime(1200, now);
+                        gain3.gain.linearRampToValueAtTime(0.02, now + 0.5);
+                        osc3.frequency.exponentialRampToValueAtTime(400, now + 1.5);
+                        gain3.gain.linearRampToValueAtTime(0, now + 2);
+                    }
+                }, Math.random() * 15000 + 10000);
+
+                // Som de trovão ocasional
+                setInterval(() => {
+                    if (audioContext) {
+                        const thunderOsc = audioContext.createOscillator();
+                        const thunderGain = audioContext.createGain();
+                        thunderOsc.connect(thunderGain);
+                        thunderGain.connect(audioContext.destination);
+                        thunderOsc.type = 'sawtooth';
+                        thunderOsc.frequency.value = 80;
+                        thunderGain.gain.value = 0.15;
+                        thunderOsc.start();
+                        thunderOsc.frequency.exponentialRampToValueAtTime(20, audioContext.currentTime + 0.5);
+                        thunderGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1.5);
+                        setTimeout(() => thunderOsc.stop(), 1500);
+                    }
+                }, Math.random() * 20000 + 15000);
+
+            } catch (error) {
+                console.log('Áudio não suportado');
+            }
+        }
+
+        // SOM DE GRITO INTENSO NO JUMPSCARE
+        function playScareSound() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+                // Grito agudo intenso
+                const osc1 = ctx.createOscillator();
+                const gain1 = ctx.createGain();
+                osc1.connect(gain1);
+                gain1.connect(ctx.destination);
+                osc1.type = 'sawtooth';
+                osc1.frequency.value = 900;
+                gain1.gain.value = 0.9;
+                osc1.start();
+                osc1.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.1);
+                osc1.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.5);
+                gain1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.6);
+                setTimeout(() => osc1.stop(), 600);
+
+                // Impacto grave
+                const osc2 = ctx.createOscillator();
+                const gain2 = ctx.createGain();
+                osc2.connect(gain2);
+                gain2.connect(ctx.destination);
+                osc2.type = 'sine';
+                osc2.frequency.value = 40;
+                gain2.gain.value = 0.8;
+                osc2.start(ctx.currentTime + 0.1);
+                gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.7);
+                setTimeout(() => osc2.stop(), 700);
+
+                // Distorção metálica
+                const osc3 = ctx.createOscillator();
+                const gain3 = ctx.createGain();
+                osc3.connect(gain3);
+                gain3.connect(ctx.destination);
+                osc3.type = 'square';
+                osc3.frequency.value = 200;
+                gain3.gain.value = 0.6;
+                osc3.start(ctx.currentTime + 0.2);
+                osc3.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.9);
+                gain3.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 1);
+                setTimeout(() => osc3.stop(), 1000);
+
+                // Segundo grito (eco)
+                const osc4 = ctx.createOscillator();
+                const gain4 = ctx.createGain();
+                osc4.connect(gain4);
+                gain4.connect(ctx.destination);
+                osc4.type = 'triangle';
+                osc4.frequency.value = 700;
+                gain4.gain.value = 0.4;
+                osc4.start(ctx.currentTime + 0.3);
+                osc4.frequency.exponentialRampToValueAtTime(300, ctx.currentTime + 0.7);
+                gain4.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 1.2);
+                setTimeout(() => osc4.stop(), 1200);
+
+                setTimeout(() => ctx.close(), 1500);
+            } catch (error) {
+                console.log('Áudio não suportado');
+            }
+        }
+
+        function saveName() {
+            if (state.tempName.trim()) {
+                state.playerName = state.tempName.trim();
+                localStorage.setItem('horrorQuizPlayerName', state.playerName);
+                render();
+            }
+        }
+
+        function changeName() {
+            state.playerName = '';
+            state.tempName = '';
+            localStorage.removeItem('horrorQuizPlayerName');
+            render();
+        }
+
+        function selectMovie(movieId) {
+            state.currentMovie = movieId;
+            state.currentQuestionIndex = 0;
+            state.score = 0;
+            state.selectedAnswer = null;
+            state.showFeedback = false;
+            state.screen = 'quiz';
+            render();
+        }
+
+        function handleAnswer(answerIndex) {
+            if (state.selectedAnswer !== null) return;
+
+            state.selectedAnswer = answerIndex;
+            const currentQuestion = questionsByMovie[state.currentMovie][state.currentQuestionIndex];
+            const isCorrect = answerIndex === currentQuestion.correctAnswer;
+
+            if (!isCorrect) {
+                document.getElementById('jumpscare').classList.remove('hidden');
+                playScareSound();
+                setTimeout(() => {
+                    document.getElementById('jumpscare').classList.add('hidden');
+                }, 1000);
+            } else {
+                state.score++;
+            }
+
+            state.showFeedback = true;
+            render();
+
+            setTimeout(() => {
+                const totalQuestions = questionsByMovie[state.currentMovie].length;
+                if (state.currentQuestionIndex < totalQuestions - 1) {
+                    state.currentQuestionIndex++;
+                    state.selectedAnswer = null;
+                    state.showFeedback = false;
+                    render();
+                } else {
+                    const ranking = {
+                        name: state.playerName || 'Anônimo',
+                        movie: movieNames[state.currentMovie],
+                        score: state.score,
+                        total: totalQuestions
+                    };
+                    state.rankings.push(ranking);
+                    state.rankings.sort((a, b) => b.score - a.score);
+                    localStorage.setItem('horrorQuizRankings', JSON.stringify(state.rankings));
+                    state.screen = 'results';
+                    render();
+                }
+            }, 2500);
+        }
+
+        function restart() {
+            state.screen = 'welcome';
+            state.currentMovie = '';
+            state.currentQuestionIndex = 0;
+            state.score = 0;
+            state.selectedAnswer = null;
+            state.showFeedback = false;
+            render();
+        }
+
+        function render() {
+            const app = document.getElementById('app');
+
+            if (state.screen === 'welcome') {
+                app.innerHTML = `
+                    <div class="screen">
+                        <div class="overlay"></div>
+                        <div class="flicker"></div>
+                        <div class="container">
+                            <svg class="skull-icon" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2">
+                                <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2z"/>
+                                <circle cx="9" cy="10" r="1.5"/>
+                                <circle cx="15" cy="10" r="1.5"/>
+                                <path d="M9 16h6"/>
+                            </svg>
+
+                            <h1 class="title">ESCOLHA SEU PESADELO</h1>
+                            <p class="subtitle">Selecione um filme de terror e teste seus conhecimentos</p>
+
+                            ${!state.playerName ? `
+                                <div class="form-box">
+                                    <h3>Digite seu nome para começar</h3>
+                                    <div class="input-group">
+                                        <input type="text" id="nameInput" class="input" placeholder="Seu nome..." maxlength="20" value="${state.tempName}" onkeyup="if(event.key==='Enter') saveName()">
+                                        <button class="btn btn-primary" onclick="saveName()">Continuar</button>
+                                    </div>
+                                </div>
+                            ` : `
+                                <div class="player-info">
+                                    <span class="player-name">Bem-vindo, ${state.playerName}! 👻</span>
+                                    <button class="btn btn-secondary" onclick="changeName()">Trocar Usuário</button>
+                                </div>
+
+                                <div class="movies-grid">
+                                    <div class="movie-card" style="background-image: url('freddy.jpg')" onclick="selectMovie('nightmare')">
+                                        <div class="movie-title">A Hora do Pesadelo</div>
+                                    </div>
+                                    <div class="movie-card" style="background-image: url('sorria.webp')" onclick="selectMovie('smile')">
+                                        <div class="movie-title">Sorria</div>
+                                    </div>
+                                    <div class="movie-card" style="background-image: url('Sobrenatural.webp')" onclick="selectMovie('insidious')">
+                                        <div class="movie-title">Sobrenatural</div>
+                                    </div>
+                                    <div class="movie-card" style="background-image: url('Invocação.webp')" onclick="selectMovie('conjuring')">
+                                        <div class="movie-title">Invocação do Mal</div>
+                                    </div>
+                                    <div class="movie-card" style="background-image: url('fale.jpg')" onclick="selectMovie('speak')">
+                                        <div class="movie-title">Fale comigo</div>
+                                    </div>
+                                    <div class="movie-card" style="background-image: url('jason.jpg')" onclick="selectMovie('friday13')">
+                                        <div class="movie-title">Sexta-Feira 13</div>
+                                    </div>
+                                    <div class="movie-card" style="background-image: url('super.jpg')" onclick="selectMovie('supernatural')">
+                                        <div class="movie-title">Supernatural</div>
+                                    </div>
+                                    <div class="movie-card" style="background-image: url('rua.jpeg')" onclick="selectMovie('Street')">
+                                        <div class="movie-title">Rua do medo</div>
+                                    </div>
+                                    <div class="movie-card" style="background-image: url('panico.jpg')" onclick="selectMovie('panic')">
+                                        <div class="movie-title">Pânico</div>
+                                    </div>
+                                    <div class="movie-card" style="background-image: url('jig.jpg')" onclick="selectMovie('saw')">
+                                        <div class="movie-title">Jogos Mortais</div>
+                                    </div>
+                                    <div class="movie-card" style="background-image: url('coisa.jpeg')" onclick="selectMovie('it')">
+                                        <div class="movie-title">It - A Coisa</div>
+                                    </div>
+                                    <div class="movie-card" style="background-image: url('carrie.jpg')" onclick="selectMovie('carrie')">
+                                        <div class="movie-title">Carrie - A Estranha</div>
+                                    </div>
+                                </div>
+                            `}
+
+                            ${state.rankings.length > 0 ? `
+                                <div class="ranking-box">
+                                    <h3 class="ranking-title">
+                                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2">
+                                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                        </svg>
+                                        RANKING GERAL
+                                    </h3>
+                                    <div class="ranking-list">
+                                        ${state.rankings.slice(0, 10).map((rank, idx) => `
+                                            <div class="ranking-item">
+                                                <div class="ranking-position ${idx === 0 ? 'gold' : idx === 1 ? 'silver' : idx === 2 ? 'bronze' : 'normal'}">${idx + 1}</div>
+                                                <div class="ranking-info">
+                                                    <div class="ranking-name">${rank.name}</div>
+                                                    <div class="ranking-movie">${rank.movie}</div>
+                                                </div>
+                                                <div class="ranking-score">${rank.score}/${rank.total}</div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+
+                const nameInput = document.getElementById('nameInput');
+                if (nameInput) {
+                    nameInput.addEventListener('input', (e) => {
+                        state.tempName = e.target.value;
+                    });
+                }
+            } else if (state.screen === 'quiz') {
+                const currentQuestion = questionsByMovie[state.currentMovie][state.currentQuestionIndex];
+                const totalQuestions = questionsByMovie[state.currentMovie].length;
+
+                app.innerHTML = `
+                    <div class="screen" style="background: #000;">
+                        <div class="score-display">
+                            <div class="score-label">Pontuação</div>
+                            <div class="score-value">${state.score}/${totalQuestions}</div>
+                        </div>
+
+                        <div class="quiz-screen">
+                            <div class="quiz-poster" style="background-image: url('${currentQuestion.poster}')"></div>
+
+                            <div class="quiz-content">
+                                <div class="quiz-header">
+                                    <div class="quiz-progress">Pergunta ${state.currentQuestionIndex + 1} de ${totalQuestions}</div>
+                                    <div class="difficulty-badge diff-${currentQuestion.difficulty}">
+                                        ${currentQuestion.difficulty === 'facil' ? 'Fácil' : currentQuestion.difficulty === 'medio' ? 'Médio' : 'Difícil'}
+                                    </div>
+                                </div>
+
+                                <h2 class="quiz-question">${currentQuestion.question}</h2>
+                                <div class="quiz-divider"></div>
+
+                                <div class="options">
+                                    ${currentQuestion.options.map((option, idx) => {
+                                        const isSelected = state.selectedAnswer === idx;
+                                        const isCorrect = idx === currentQuestion.correctAnswer;
+                                        const showAsCorrect = state.selectedAnswer !== null && isCorrect;
+                                        const showAsIncorrect = isSelected && !isCorrect && state.selectedAnswer !== null;
+
+                                        return `
+                                            <button class="option ${showAsCorrect ? 'correct' : ''} ${showAsIncorrect ? 'incorrect' : ''}"
+                                                    onclick="handleAnswer(${idx})"
+                                                    ${state.selectedAnswer !== null ? 'disabled' : ''}>
+                                                <div class="option-letter">${String.fromCharCode(65 + idx)}</div>
+                                                <span>${option}</span>
+                                            </button>
+                                        `;
+                                    }).join('')}
+                                </div>
+
+                                ${state.showFeedback ? `
+                                    <div class="feedback ${state.selectedAnswer === currentQuestion.correctAnswer ? 'correct' : 'incorrect'}">
+                                        ${state.selectedAnswer === currentQuestion.correctAnswer
+                                            ? '✓ Resposta correta!'
+                                            : `✗ Resposta incorreta! A resposta certa era: ${currentQuestion.options[currentQuestion.correctAnswer]}`}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (state.screen === 'results') {
+                const totalQuestions = questionsByMovie[state.currentMovie]?.length || 9;
+                const percentage = Math.round((state.score / totalQuestions) * 100);
+                const stars = Math.round((state.score / totalQuestions) * 5);
+                const resultClass = percentage >= 70 ? 'success' : percentage >= 40 ? 'warning' : 'danger';
+                const resultText = percentage >= 70 ? 'SOBREVIVEU!' : percentage >= 40 ? 'ESCAPOU!' : 'ELIMINADO!';
+                const resultMsg = percentage >= 70 ? 'Você conhece bem seus filmes de terror!' : percentage >= 40 ? 'Você teve sorte desta vez...' : 'O terror venceu desta vez...';
+
+                app.innerHTML = `
+                    <div class="screen">
+                        <div class="overlay"></div>
+                        <div class="container">
+                            <svg class="results-icon" style="filter: drop-shadow(0 0 20px ${percentage >= 70 ? '#22c55e' : percentage >= 40 ? '#fbbf24' : '#ef4444'})" viewBox="0 0 24 24" fill="none" stroke="${percentage >= 70 ? '#22c55e' : percentage >= 40 ? '#fbbf24' : '#ef4444'}" stroke-width="2">
+                                <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2z"/>
+                            </svg>
+
+                            <h1 class="results-title ${resultClass}">${resultText}</h1>
+                            <p class="results-msg">${resultMsg}</p>
+
+                            <div class="results-box">
+                                <div class="results-score">${state.score}/${totalQuestions}</div>
+                                <div class="results-label">Respostas Corretas</div>
+
+                                <div class="stars">
+                                    ${[...Array(5)].map((_, idx) => `
+                                        <svg class="star" viewBox="0 0 24 24" fill="${idx < stars ? '#fbbf24' : '#4b5563'}">
+                                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                        </svg>
+                                    `).join('')}
+                                </div>
+
+                                <div class="results-percent">${percentage}%</div>
+                            </div>
+
+                            <button class="btn btn-primary" onclick="restart()" style="padding: 20px 50px; font-size: 1.5rem;">
+                                JOGAR NOVAMENTE
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        startBackgroundMusic();
+        render();
+    </script>
+</body>
+</html>
